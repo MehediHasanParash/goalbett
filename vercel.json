@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/s/(.*)",
+      "headers": {
+        "X-Domain-Type": "super-admin"
+      },
+      "continue": true
+    }
+  ],
+  "env": {
+    "SUPER_ADMIN_DOMAIN": "betengin.com"
+  },
+  "crons": [
+    {
+      "path": "/api/cron/weekly-commission",
+      "schedule": "0 0 * * 1"
+    }
+  ]
+}

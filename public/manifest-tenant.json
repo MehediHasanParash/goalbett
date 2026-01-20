@@ -1,0 +1,23 @@
+{
+  "id": "goalbett-tenant-admin",
+  "name": "GoalBett Tenant Admin",
+  "short_name": "Tenant Admin",
+  "description": "Tenant administration portal for GoalBett",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0A1A2F",
+  "theme_color": "#10B981",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/tenantIcon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "finance"],
+  "prefer_related_applications": false,
+  "handle_links": "preferred"
+}

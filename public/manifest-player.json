@@ -1,0 +1,23 @@
+{
+  "id": "goalbett-player-app",
+  "name": "GoalBett",
+  "short_name": "GoalBett",
+  "description": "Sports betting and casino games",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0A1A2F",
+  "theme_color": "#FFD700",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/playerIcon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "entertainment", "games"],
+  "prefer_related_applications": false,
+  "handle_links": "preferred"
+}

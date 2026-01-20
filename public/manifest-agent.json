@@ -1,0 +1,23 @@
+{
+  "id": "goalbett-agent-portal",
+  "name": "GoalBett Agent Portal",
+  "short_name": "Agent",
+  "description": "Agent portal for player management and transactions",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0A1A2F",
+  "theme_color": "#8B5CF6",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/agentIcon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "prefer_related_applications": false,
+  "handle_links": "preferred"
+}

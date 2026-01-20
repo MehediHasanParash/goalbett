@@ -1,0 +1,38 @@
+{
+  "name": "Tenant Admin Portal",
+  "short_name": "Tenant Admin",
+  "description": "Manage your betting platform",
+  "start_url": "/t/dashboard",
+  "scope": "/t/",
+  "display": "standalone",
+  "background_color": "#0A1A2F",
+  "theme_color": "#10B981",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/api/pwa-icon?size=192&role=tenant-admin",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/api/pwa-icon?size=512&role=tenant-admin",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"]
+}

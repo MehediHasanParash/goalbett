@@ -1,0 +1,486 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ========================================
+   THEME 1: CLASSIC - Dark Blue & Gold
+   Current default theme
+   ======================================== */
+:root,
+html[data-theme="classic"],
+body[data-theme="classic"] {
+  --background: #0a1a2f;
+  --foreground: #f5f5f5;
+  --card: #0d1f35;
+  --card-foreground: #f5f5f5;
+  --popover: #0d1f35;
+  --popover-foreground: #f5f5f5;
+  --primary: #0a1a2f;
+  --primary-foreground: #f5f5f5;
+  --secondary: #ffd700;
+  --secondary-foreground: #0a1a2f;
+  --muted: #1a2f45;
+  --muted-foreground: #b8c5d6;
+  --accent: #ffd700;
+  --accent-foreground: #0a1a2f;
+  --destructive: #dc2626;
+  --destructive-foreground: #f5f5f5;
+  --border: #2a3f55;
+  --input: #2a3f55;
+  --ring: #ffd700;
+  --chart-1: #ffd700;
+  --chart-2: #0a1a2f;
+  --chart-3: #4a90e2;
+  --chart-4: #f5f5f5;
+  --chart-5: #b8c5d6;
+  --radius: 0.625rem;
+  --sidebar: #0d1f35;
+  --sidebar-foreground: #f5f5f5;
+  --sidebar-primary: #ffd700;
+  --sidebar-primary-foreground: #0a1a2f;
+  --sidebar-accent: #1a2f45;
+  --sidebar-accent-foreground: #f5f5f5;
+  --sidebar-border: #2a3f55;
+  --sidebar-ring: #ffd700;
+
+  /* Theme color tokens for JS usage */
+  --theme-bg-dark: #0a1a2f;
+  --theme-bg-card: #0d1f35;
+  --theme-bg-muted: #1a2f45;
+  --theme-border: #2a3f55;
+  --theme-accent: #ffd700;
+  --theme-accent-fg: #0a1a2f;
+  --theme-text: #f5f5f5;
+  --theme-text-muted: #b8c5d6;
+}
+
+/* ========================================
+   THEME 2: MODERN - Light Purple & White
+   ======================================== */
+html[data-theme="modern"],
+body[data-theme="modern"] {
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --card: #ffffff;
+  --card-foreground: #1e293b;
+  --popover: #ffffff;
+  --popover-foreground: #1e293b;
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --secondary: #7c3aed;
+  --secondary-foreground: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #a78bfa;
+  --accent-foreground: #1e293b;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #7c3aed;
+  --chart-1: #7c3aed;
+  --chart-2: #a78bfa;
+  --chart-3: #c4b5fd;
+  --chart-4: #1e293b;
+  --chart-5: #64748b;
+  --radius: 0.75rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1e293b;
+  --sidebar-primary: #7c3aed;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #1e293b;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #7c3aed;
+
+  --theme-bg-dark: #f8fafc;
+  --theme-bg-card: #ffffff;
+  --theme-bg-muted: #f1f5f9;
+  --theme-border: #e2e8f0;
+  --theme-accent: #7c3aed;
+  --theme-accent-fg: #ffffff;
+  --theme-text: #1e293b;
+  --theme-text-muted: #64748b;
+}
+
+/* ========================================
+   THEME 3: NEON - Cyberpunk Gaming
+   ======================================== */
+html[data-theme="neon"],
+body[data-theme="neon"] {
+  --background: #0a0a0f;
+  --foreground: #e0e0e0;
+  --card: #12121a;
+  --card-foreground: #e0e0e0;
+  --popover: #12121a;
+  --popover-foreground: #e0e0e0;
+  --primary: #00ffd5;
+  --primary-foreground: #0a0a0f;
+  --secondary: #00ffd5;
+  --secondary-foreground: #0a0a0f;
+  --muted: #1a1a25;
+  --muted-foreground: #888899;
+  --accent: #00d4ff;
+  --accent-foreground: #0a0a0f;
+  --destructive: #ff3366;
+  --destructive-foreground: #ffffff;
+  --border: #2a2a3a;
+  --input: #2a2a3a;
+  --ring: #00ffd5;
+  --chart-1: #00ffd5;
+  --chart-2: #39ff14;
+  --chart-3: #00d4ff;
+  --chart-4: #ff3366;
+  --chart-5: #888899;
+  --radius: 0.5rem;
+  --sidebar: #12121a;
+  --sidebar-foreground: #e0e0e0;
+  --sidebar-primary: #00ffd5;
+  --sidebar-primary-foreground: #0a0a0f;
+  --sidebar-accent: #1a1a25;
+  --sidebar-accent-foreground: #e0e0e0;
+  --sidebar-border: #2a2a3a;
+  --sidebar-ring: #00ffd5;
+
+  --theme-bg-dark: #0a0a0f;
+  --theme-bg-card: #12121a;
+  --theme-bg-muted: #1a1a25;
+  --theme-border: #2a2a3a;
+  --theme-accent: #00ffd5;
+  --theme-accent-fg: #0a0a0f;
+  --theme-text: #e0e0e0;
+  --theme-text-muted: #888899;
+}
+
+/* ========================================
+   AGGRESSIVE COLOR OVERRIDES
+   These override hardcoded Tailwind classes
+   ======================================== */
+
+/* Modern Theme Overrides */
+html[data-theme="modern"] *,
+body[data-theme="modern"] * {
+  /* Background overrides */
+  &[class*="bg-[#0a1a2f]"],
+  &[class*="bg-[#0A1A2F]"] {
+    background-color: var(--theme-bg-dark) !important;
+  }
+  &[class*="bg-[#0d1f35]"],
+  &[class*="bg-[#0D1F35]"] {
+    background-color: var(--theme-bg-card) !important;
+  }
+  &[class*="bg-[#1a2f45]"],
+  &[class*="bg-[#1A2F45]"] {
+    background-color: var(--theme-bg-muted) !important;
+  }
+
+  /* Border overrides */
+  &[class*="border-[#2a3f55]"],
+  &[class*="border-[#2A3F55]"] {
+    border-color: var(--theme-border) !important;
+  }
+
+  /* Text overrides */
+  &[class*="text-[#FFD700]"],
+  &[class*="text-[#ffd700]"] {
+    color: var(--theme-accent) !important;
+  }
+  &[class*="text-[#F5F5F5]"],
+  &[class*="text-[#f5f5f5]"] {
+    color: var(--theme-text) !important;
+  }
+  &[class*="text-[#B8C5D6]"],
+  &[class*="text-[#b8c5d6]"] {
+    color: var(--theme-text-muted) !important;
+  }
+
+  /* Accent background */
+  &[class*="bg-[#FFD700]"],
+  &[class*="bg-[#ffd700]"] {
+    background-color: var(--theme-accent) !important;
+  }
+}
+
+/* Neon Theme Overrides */
+html[data-theme="neon"] *,
+body[data-theme="neon"] * {
+  /* Background overrides */
+  &[class*="bg-[#0a1a2f]"],
+  &[class*="bg-[#0A1A2F]"] {
+    background-color: var(--theme-bg-dark) !important;
+  }
+  &[class*="bg-[#0d1f35]"],
+  &[class*="bg-[#0D1F35]"] {
+    background-color: var(--theme-bg-card) !important;
+  }
+  &[class*="bg-[#1a2f45]"],
+  &[class*="bg-[#1A2F45]"] {
+    background-color: var(--theme-bg-muted) !important;
+  }
+
+  /* Border overrides */
+  &[class*="border-[#2a3f55]"],
+  &[class*="border-[#2A3F55]"] {
+    border-color: var(--theme-border) !important;
+  }
+
+  /* Text overrides */
+  &[class*="text-[#FFD700]"],
+  &[class*="text-[#ffd700]"] {
+    color: var(--theme-accent) !important;
+    text-shadow: 0 0 10px var(--theme-accent);
+  }
+  &[class*="text-[#F5F5F5]"],
+  &[class*="text-[#f5f5f5]"] {
+    color: var(--theme-text) !important;
+  }
+  &[class*="text-[#B8C5D6]"],
+  &[class*="text-[#b8c5d6]"] {
+    color: var(--theme-text-muted) !important;
+  }
+
+  /* Accent background */
+  &[class*="bg-[#FFD700]"],
+  &[class*="bg-[#ffd700]"] {
+    background-color: var(--theme-accent) !important;
+  }
+}
+
+/* ========================================
+   GRADIENT OVERRIDES FOR ALL THEMES
+   ======================================== */
+html[data-theme="modern"] {
+  .bg-gradient-to-br,
+  .bg-gradient-to-r,
+  .bg-gradient-to-b,
+  .bg-gradient-to-t {
+    &[class*="from-[#0A1A2F]"],
+    &[class*="from-[#0a1a2f]"] {
+      --tw-gradient-from: var(--theme-bg-dark) !important;
+    }
+    &[class*="via-[#0D1F35]"],
+    &[class*="via-[#0d1f35]"] {
+      --tw-gradient-via: var(--theme-bg-card) !important;
+    }
+    &[class*="to-[#0A1A2F]"],
+    &[class*="to-[#0a1a2f]"] {
+      --tw-gradient-to: var(--theme-bg-dark) !important;
+    }
+  }
+
+  /* Body and main elements */
+  body,
+  main,
+  .min-h-screen {
+    background: linear-gradient(135deg, var(--theme-bg-dark), var(--theme-bg-card), var(--theme-bg-dark)) !important;
+    color: var(--theme-text) !important;
+  }
+}
+
+html[data-theme="neon"] {
+  .bg-gradient-to-br,
+  .bg-gradient-to-r,
+  .bg-gradient-to-b,
+  .bg-gradient-to-t {
+    &[class*="from-[#0A1A2F]"],
+    &[class*="from-[#0a1a2f]"] {
+      --tw-gradient-from: var(--theme-bg-dark) !important;
+    }
+    &[class*="via-[#0D1F35]"],
+    &[class*="via-[#0d1f35]"] {
+      --tw-gradient-via: var(--theme-bg-card) !important;
+    }
+    &[class*="to-[#0A1A2F]"],
+    &[class*="to-[#0a1a2f]"] {
+      --tw-gradient-to: var(--theme-bg-dark) !important;
+    }
+  }
+
+  body,
+  main,
+  .min-h-screen {
+    background: linear-gradient(135deg, var(--theme-bg-dark), var(--theme-bg-card), var(--theme-bg-dark)) !important;
+    color: var(--theme-text) !important;
+  }
+}
+
+/* ========================================
+   LOW BANDWIDTH MODE STYLES
+   ======================================== */
+
+/* Low bandwidth mode - disable animations */
+html.low-bandwidth,
+html.reduce-motion {
+  --animation-duration: 0s !important;
+  --transition-duration: 0s !important;
+}
+
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Disable non-essential images */
+html.disable-images img:not([data-essential="true"]),
+html.disable-images [class*="bg-[url"] {
+  visibility: hidden !important;
+}
+
+html.disable-images img:not([data-essential="true"])::after {
+  content: attr(alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+/* Reduced quality mode - simpler shadows and effects */
+html.reduced-quality * {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html.reduced-quality .blur,
+html.reduced-quality [class*="blur-"] {
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Low bandwidth indicator */
+html.low-bandwidth body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #eab308, #facc15);
+  z-index: 9999;
+}
+
+/* ========================================
+   SEMANTIC COLOR CLASSES
+   Use these for new components
+   ======================================== */
+.theme-bg-dark {
+  background-color: var(--theme-bg-dark);
+}
+.theme-bg-card {
+  background-color: var(--theme-bg-card);
+}
+.theme-bg-muted {
+  background-color: var(--theme-bg-muted);
+}
+.theme-border {
+  border-color: var(--theme-border);
+}
+.theme-accent {
+  color: var(--theme-accent);
+}
+.theme-accent-bg {
+  background-color: var(--theme-accent);
+  color: var(--theme-accent-fg);
+}
+.theme-text {
+  color: var(--theme-text);
+}
+.theme-text-muted {
+  color: var(--theme-text-muted);
+}
+
+/* Removed heavy * transition that was slowing down the entire page */
+/* Only apply transitions to interactive elements */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+.transition-colors {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
+@theme inline {
+  --font-sans: "Geist", "Geist Fallback";
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Add performance optimizations */
+/* GPU acceleration for animations */
+.will-change-transform {
+  will-change: transform;
+}
+
+/* Content visibility for off-screen elements */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
