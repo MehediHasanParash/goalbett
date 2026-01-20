@@ -1,8 +1,11 @@
 "use client"
 
+import { useState } from "react"
 import { useBets } from "@/hooks/useBets"
 import { useTenant } from "@/components/providers/tenant-provider"
-import { Clock, Check, X, Loader2 } from "lucide-react"
+import { Clock, Check, X, Loader2, FileText } from "lucide-react"
+import { BetReceiptModal } from "./bet-receipt-modal"
+import { Button } from "@/components/ui/button"
 
 const statusConfig = {
   pending: { icon: Clock, color: "text-amber-400", bg: "bg-amber-500/10" },
@@ -15,6 +18,13 @@ const statusConfig = {
 export function BetHistory({ limit = 10 }) {
   const { bets, isLoading, isError } = useBets({ limit })
   const { primaryColor } = useTenant()
+  const [selectedBet, setSelectedBet] = useState(null)
+  const [receiptOpen, setReceiptOpen] = useState(false)
+
+  const handleViewReceipt = (bet) => {
+    setSelectedBet(bet)
+    setReceiptOpen(true)
+  }
 
   if (isLoading) {
     return (
@@ -92,13 +102,38 @@ export function BetHistory({ limit = 10 }) {
               <div className="text-right">
                 <p className="text-xs text-[#B8C5D6]">{bet.status === "won" ? "Won" : "Potential Win"}</p>
                 <p className="text-sm font-bold" style={{ color: primaryColor }}>
-                  {bet.currency} {(bet.status === "won" ? bet.payout : bet.potentialWin).toFixed(2)}
+                  {bet.currency} {(bet.status === "won" ? bet.actualWin || bet.payout : bet.potentialWin).toFixed(2)}
                 </p>
               </div>
             </div>
+
+            {/* View Receipt Button (only for settled bets) */}
+            {(bet.status === "won" || bet.status === "lost") && (
+              <div className="mt-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleViewReceipt(bet)}
+                >
+                  <FileText className="w-3 h-3 mr-2" />
+                  View Receipt
+                </Button>
+              </div>
+            )}
           </div>
         )
       })}
+
+      {/* Receipt Modal */}
+      <BetReceiptModal
+        bet={selectedBet}
+        open={receiptOpen}
+        onClose={() => {
+          setReceiptOpen(false)
+          setSelectedBet(null)
+        }}
+      />
     </div>
   )
 }

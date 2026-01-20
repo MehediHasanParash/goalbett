@@ -83,6 +83,7 @@ const menuItems = [
   { icon: Lock, label: "Compliance", href: "/s/compliance" },
   { icon: Shield, label: "Syndicate Alerts", href: "/s/syndicate-alerts" },
   { icon: Scale, label: "Legal & Ownership", href: "/s/legal-ownership" },
+  { icon: Globe, label: "Jurisdiction Rules", href: "/s/jurisdiction-rules" },
   { icon: Palette, label: "White-Label Theme", href: "/s/theme-manager" },
   { icon: PaintBucket, label: "Design Management", href: "/s/design-management" },
   { icon: MessageSquare, label: "USSD Monitoring", href: "/s/ussd-monitoring" },
