@@ -12,12 +12,62 @@ export function BetReceiptModal({ bet, open, onClose }) {
   if (!bet) return null
 
   const formatCurrency = (amount, currency = "USD") => {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency,
+        minimumFractionDigits: 2,
+      }).format(0)
+    }
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
       minimumFractionDigits: 2,
     }).format(amount)
   }
+
+  // Calculate gross winnings with fallback
+  const calculateGrossWin = () => {
+    if (bet.status !== "won") return 0
+
+    // Try taxDetails first
+    if (bet.taxDetails && typeof bet.taxDetails.grossWin === 'number' && !isNaN(bet.taxDetails.grossWin)) {
+      return bet.taxDetails.grossWin
+    }
+
+    // Fallback: calculate from payout - stake
+    const payout = bet.payout || bet.potentialWin || bet.actualWin || 0
+    const stake = bet.stake || 0
+    return payout - stake
+  }
+
+  // Calculate net amount with fallback
+  const calculateNetAmount = () => {
+    if (bet.status !== "won") return 0
+
+    const grossWin = calculateGrossWin()
+    const stake = bet.stake || 0
+
+    // If we have taxDetails with deductions
+    if (bet.taxDetails && bet.taxDetails.netWin !== undefined && !isNaN(bet.taxDetails.netWin)) {
+      return stake + bet.taxDetails.netWin
+    }
+
+    // If we have totalDeductions
+    if (bet.taxDetails && bet.taxDetails.totalDeductions !== undefined && !isNaN(bet.taxDetails.totalDeductions)) {
+      return stake + (grossWin - bet.taxDetails.totalDeductions)
+    }
+
+    // Fallback: no deductions, return full amount
+    return stake + grossWin
+  }
+
+  const grossWinnings = calculateGrossWin()
+  const netAmount = calculateNetAmount()
+  const hasValidDeductions = bet.taxDetails &&
+    bet.taxDetails.deductions &&
+    Array.isArray(bet.taxDetails.deductions) &&
+    bet.taxDetails.deductions.length > 0
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -117,16 +167,16 @@ export function BetReceiptModal({ bet, open, onClose }) {
                 <span className="font-medium">{formatCurrency(bet.potentialWin, bet.currency)}</span>
               </div>
 
-              {bet.status === "won" && bet.taxDetails && (
+              {bet.status === "won" && (
                 <>
                   <Separator className="my-3" />
 
                   <div className="flex justify-between text-sm font-semibold">
                     <span>Gross Winnings</span>
-                    <span className="text-green-600">{formatCurrency(bet.taxDetails.grossWin, bet.currency)}</span>
+                    <span className="text-green-600">{formatCurrency(grossWinnings, bet.currency)}</span>
                   </div>
 
-                  {bet.taxDetails.deductions && bet.taxDetails.deductions.length > 0 && (
+                  {hasValidDeductions && (
                     <>
                       <Separator className="my-2" />
 
@@ -160,18 +210,26 @@ export function BetReceiptModal({ bet, open, onClose }) {
                     </>
                   )}
 
+                  {!hasValidDeductions && (
+                    <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded text-xs text-muted-foreground">
+                      ℹ️ No deductions were applied to this bet. Full winnings credited.
+                    </div>
+                  )}
+
                   <Separator className="my-3" />
 
                   <div className="flex justify-between text-lg font-bold">
                     <span>Net Amount Credited</span>
                     <span className="text-green-600">
-                      {formatCurrency(bet.stake + (bet.taxDetails.netWin || 0), bet.currency)}
+                      {formatCurrency(netAmount, bet.currency)}
                     </span>
                   </div>
 
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Jurisdiction: {bet.taxDetails.countryCode} | Rule Version: v{bet.taxDetails.ruleVersion}
-                  </p>
+                  {bet.taxDetails && bet.taxDetails.countryCode && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Jurisdiction: {bet.taxDetails.countryCode || 'N/A'} | Rule Version: v{bet.taxDetails.ruleVersion || 'N/A'}
+                    </p>
+                  )}
                 </>
               )}
 
@@ -209,10 +267,15 @@ export function BetReceiptModal({ bet, open, onClose }) {
                     <span className="font-semibold">Settlement Type:</span>{" "}
                     {bet.settledBy === "auto" ? "Automatic" : "Manual"}
                   </p>
-                  {bet.taxDetails && (
+                  {hasValidDeductions && (
                     <p className="mt-2 text-muted-foreground">
                       All deductions were automatically calculated and applied according to the jurisdiction rules in effect
                       at the time of settlement. This receipt serves as proof of transaction.
+                    </p>
+                  )}
+                  {!hasValidDeductions && bet.status === "won" && (
+                    <p className="mt-2 text-muted-foreground">
+                      No deductions were applied to this bet. Full winnings were credited to your account.
                     </p>
                   )}
                 </div>
