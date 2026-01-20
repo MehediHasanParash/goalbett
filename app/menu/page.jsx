@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useTenant } from "@/components/providers/tenant-provider"
 import { useThemeColors } from "@/hooks/useThemeColors"
 import { Card } from "@/components/ui/card"
-import { Trophy, Users, Settings, HelpCircle, LogOut, ChevronRight, Volume2, Globe, Shield, Wallet } from "lucide-react"
+import { Trophy, Users, Settings, HelpCircle, LogOut, ChevronRight, Volume2, Globe, Shield, Wallet, Receipt } from "lucide-react"
 import { useState } from "react"
 import Link from "next/link"
 import LanguageSwitcher from "@/components/i18n/language-switcher"
@@ -47,6 +47,7 @@ export default function MenuPage() {
   const currencySymbol = CURRENCIES[walletCurrency]?.symbol || "$"
 
   const menuItems = [
+    { icon: Receipt, label: t("myBets") || "My Bets", href: "/p/dashboard/bet-history", requiresAuth: true },
     { icon: Trophy, label: t("missions"), href: "/missions", requiresAuth: true },
     { icon: Wallet, label: t("wallet"), href: "/wallet", requiresAuth: true },
     { icon: Users, label: t("leaderboard"), href: "/leaderboard", requiresAuth: false },

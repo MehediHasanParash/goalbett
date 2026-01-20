@@ -220,6 +220,9 @@ export default function PlayerDashboardPage() {
                 <Link href="/p/dashboard/casino" className="text-[#B8C5D6] hover:text-[#FFD700] transition-colors">
                   Casino
                 </Link>
+                <Link href="/p/dashboard/bet-history" className="text-[#B8C5D6] hover:text-[#FFD700] transition-colors">
+                  My Bets
+                </Link>
               </nav>
             </div>
             <div className="flex items-center space-x-2 md:space-x-4">
@@ -283,6 +286,14 @@ export default function PlayerDashboardPage() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Casino
+                </Link>
+                <Link
+                  href="/p/dashboard/bet-history"
+                  className="text-[#B8C5D6] hover:text-[#FFD700] transition-colors px-2 py-1 flex items-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Receipt className="w-4 h-4" />
+                  My Bets
                 </Link>
                 <div className="flex flex-col space-y-2 pt-2 sm:hidden">
                   <Link href="/p/dashboard" onClick={() => setMobileMenuOpen(false)}>
