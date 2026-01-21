@@ -269,9 +269,13 @@ function AuthPageContent() {
               <input type="checkbox" className="mr-2 accent-secondary" />
               <span className="text-[#B8C5D6]">Remember me</span>
             </label>
-            <a href="#" className="text-secondary hover:underline">
+            <button
+              type="button"
+              onClick={() => router.push("/auth/forgot-password")}
+              className="text-secondary hover:underline"
+            >
               Forgot password?
-            </a>
+            </button>
           </div>
 
           <BrandedButton
