@@ -1,18 +1,29 @@
 import { NextResponse } from "next/server"
 import connectDB from "@/lib/mongodb"
 import User from "@/lib/models/User"
-import { verifyToken, getAuthToken } from "@/lib/auth-service"
+import { verifyToken } from "@/lib/jwt"
 import bcrypt from "bcryptjs"
+
+function extractToken(request) {
+  const authHeader = request.headers.get("authorization") || request.headers.get("Authorization")
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.substring(7)
+    if (token && token !== "null" && token !== "undefined") {
+      return token
+    }
+  }
+  return null
+}
 
 export async function GET(request) {
   try {
-    const token = getAuthToken(request)
+    const token = extractToken(request)
     if (!token) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
     const decoded = await verifyToken(token)
-    if (!decoded || decoded.role !== "super_admin") {
+    if (!decoded || (decoded.role !== "super_admin" && decoded.role !== "superadmin")) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
@@ -44,13 +55,13 @@ export async function GET(request) {
 
 export async function PUT(request) {
   try {
-    const token = getAuthToken(request)
+    const token = extractToken(request)
     if (!token) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
     const decoded = await verifyToken(token)
-    if (!decoded || decoded.role !== "super_admin") {
+    if (!decoded || (decoded.role !== "super_admin" && decoded.role !== "superadmin")) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 

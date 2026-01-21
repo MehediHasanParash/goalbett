@@ -22,6 +22,10 @@ export function EmailChangeCard({ title = "Update Email", description = "Change 
   const fetchProfile = async () => {
     try {
       const token = getAuthToken()
+      if (!token) {
+        setError("Not authenticated. Please log in again.")
+        return
+      }
       const response = await fetch("/api/super/profile", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -30,9 +34,13 @@ export function EmailChangeCard({ title = "Update Email", description = "Change 
       const data = await response.json()
       if (data.success && data.user) {
         setCurrentEmail(data.user.email)
+        setError("")
+      } else if (response.status === 401) {
+        setError("Session expired. Please log in again.")
       }
-    } catch (error) {
-      console.error("Failed to fetch profile:", error)
+    } catch (err) {
+      console.error("Failed to fetch profile:", err)
+      setError("Failed to load profile")
     }
   }
 
