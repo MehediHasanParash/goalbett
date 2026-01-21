@@ -82,9 +82,17 @@ export default function ResetPasswordPage() {
           player: "/p/login",
           agent: "/a/login",
           subagent: "/a/login",
+          sub_agent: "/a/login",
           tenant: "/t/login",
+          tenant_admin: "/t/login",
+          superadmin: "/s/login",
           super_admin: "/s/login",
+          admin: "/admin/login",
           staff: "/staff/login",
+          finance_manager: "/staff/login",
+          general_manager: "/staff/login",
+          support_manager: "/staff/login",
+          support_agent: "/staff/login",
         }[data.role] || "/auth"
 
         router.push(`${loginPath}?reset=success`)

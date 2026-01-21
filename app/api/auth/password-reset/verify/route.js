@@ -3,7 +3,6 @@ import connectDB from "@/lib/mongodb"
 import User from "@/lib/models/User"
 import PasswordResetToken from "@/lib/models/PasswordResetToken"
 import { sendPasswordChangedNotification } from "@/lib/email-service"
-import bcrypt from "bcryptjs"
 
 export async function POST(request) {
   try {
@@ -71,8 +70,7 @@ export async function POST(request) {
       )
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 12)
-    user.password = hashedPassword
+    user.password = newPassword
     user.passwordChangedAt = new Date()
     await user.save()
 
