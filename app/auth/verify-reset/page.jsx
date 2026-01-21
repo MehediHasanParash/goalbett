@@ -1,24 +1,27 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useRouter } from 'next/navigation'
-import { Shield } from 'lucide-react'
+import { Shield, AlertCircle } from 'lucide-react'
 import { AuthLayout } from "@/components/ui/auth-layout"
 import { AnimatedButton } from "@/components/ui/animated-button"
 
 export default function VerifyResetPage() {
   const router = useRouter()
   const [code, setCode] = useState(["", "", "", "", "", ""])
-  const [timeLeft, setTimeLeft] = useState(600) // 10 minutes
+  const [timeLeft, setTimeLeft] = useState(1800)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [identifier, setIdentifier] = useState("")
+  const [email, setEmail] = useState("")
   const [method, setMethod] = useState("")
+  const [debugOtp, setDebugOtp] = useState("")
 
   useEffect(() => {
-    // Get identifier from session storage
     const resetIdentifier = sessionStorage.getItem("reset_identifier")
     const resetMethod = sessionStorage.getItem("reset_method")
-    
+    const resetEmail = sessionStorage.getItem("reset_email")
+    const resetDebugOtp = sessionStorage.getItem("reset_debug_otp")
+
     if (!resetIdentifier || !resetMethod) {
       router.push("/auth/forgot-password")
       return
@@ -26,6 +29,10 @@ export default function VerifyResetPage() {
 
     setIdentifier(resetIdentifier)
     setMethod(resetMethod)
+    setEmail(resetEmail || resetIdentifier)
+    if (resetDebugOtp) {
+      setDebugOtp(resetDebugOtp)
+    }
   }, [router])
 
   useEffect(() => {
@@ -79,8 +86,12 @@ export default function VerifyResetPage() {
       const data = await response.json()
 
       if (data.success) {
-        setTimeLeft(600)
+        setTimeLeft(1800)
         setCode(["", "", "", "", "", ""])
+        if (data._debug_otp) {
+          setDebugOtp(data._debug_otp)
+          sessionStorage.setItem("reset_debug_otp", data._debug_otp)
+        }
       } else {
         setError(data.error || "Failed to resend code")
       }
@@ -100,7 +111,7 @@ export default function VerifyResetPage() {
   return (
     <AuthLayout
       title="Verify Code"
-      subtitle={`We've sent a verification code to your ${method}`}
+      subtitle={`We've sent a verification code to ${email.replace(/(.{2})(.*)(@.*)/, "$1***$3")}`}
       showBack={true}
       onBack={() => router.push("/auth/forgot-password")}
     >
@@ -110,6 +121,23 @@ export default function VerifyResetPage() {
             <Shield className="h-10 w-10 text-primary" />
           </div>
         </div>
+
+        {debugOtp && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-amber-500">Development Mode</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Your OTP code is: <span className="font-mono font-bold text-amber-500">{debugOtp}</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  (In production, this would be sent via email)
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-4">
           <p className="text-center text-muted-foreground">Enter the 6-digit code</p>

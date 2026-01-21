@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { PasswordChangeCard } from "./password-change-card"
+import { EmailChangeCard } from "./email-change-card"
 import { UNIQUE_CURRENCY_OPTIONS } from "@/lib/currency-config"
 
 export function SuperAdminGlobalSettings() {
@@ -585,6 +586,11 @@ export function SuperAdminGlobalSettings() {
 
         {/* Account Tab */}
         <TabsContent value="account" className="space-y-6">
+          <EmailChangeCard
+            title="Update Email Address"
+            description="Change your super admin email for password recovery and notifications"
+          />
+
           <PasswordChangeCard
             title="Change Your Password"
             description="Update your super admin account password for security"

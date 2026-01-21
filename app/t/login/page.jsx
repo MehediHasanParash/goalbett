@@ -73,6 +73,15 @@ export default function TenantAdminLoginPage() {
             <BrandedButton type="submit" disabled={loading} className="w-full" variant="primary">
               {loading ? "Signing in..." : "Sign In"}
             </BrandedButton>
+
+            <div className="text-center">
+              <Link
+                href="/auth/forgot-password"
+                className="text-[#FFD700]/70 hover:text-[#FFD700] text-sm transition-colors"
+              >
+                Forgot Password?
+              </Link>
+            </div>
           </form>
 
           <div className="mt-6 text-center text-sm text-[#B8C5D6]">

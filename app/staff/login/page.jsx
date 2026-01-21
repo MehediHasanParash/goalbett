@@ -133,7 +133,7 @@ export default function StaffLoginPage() {
           {/* Footer Links */}
           <div className="mt-6 space-y-3">
             <div className="text-center text-sm text-[#B8C5D6]">
-              <Link href="/forgot-password" className="text-[#FFD700] hover:text-[#FFD700]/80 font-semibold">
+              <Link href="/auth/forgot-password" className="text-[#FFD700] hover:text-[#FFD700]/80 font-semibold">
                 Forgot your password?
               </Link>
             </div>

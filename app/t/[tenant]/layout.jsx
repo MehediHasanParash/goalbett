@@ -1,10 +1,12 @@
-// Tenant Layout (backwards compatibility fallback)
+"use client"
+
+import { use } from "react"
 import { TenantProvider } from "@/components/providers/tenant-provider"
 
 export default function TenantLayout({ children, params }) {
-  const { tenant } = params
+  const resolvedParams = use(params)
+  const { tenant } = resolvedParams
 
-  // This is legacy path-based routing fallback
   const pathname = typeof window !== "undefined" ? window.location.pathname : ""
 
   let context = "public"

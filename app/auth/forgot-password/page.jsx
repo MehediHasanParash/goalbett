@@ -38,9 +38,12 @@ export default function ForgotPasswordPage() {
       const data = await response.json()
 
       if (data.success) {
-        // Store identifier for verification page
         sessionStorage.setItem("reset_identifier", identifier)
         sessionStorage.setItem("reset_method", method)
+        sessionStorage.setItem("reset_email", data.email || identifier)
+        if (data._debug_otp) {
+          sessionStorage.setItem("reset_debug_otp", data._debug_otp)
+        }
         router.push("/auth/verify-reset")
       } else {
         setError(data.error || "Failed to send reset code")

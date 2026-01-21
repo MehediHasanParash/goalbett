@@ -84,6 +84,16 @@ export default function SuperAdminLoginPage() {
             {isLoading ? "Authenticating..." : "Access Super Admin"}
           </AnimatedButton>
 
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => router.push("/auth/forgot-password")}
+              className="text-sm text-[#FFD700]/70 hover:text-[#FFD700] transition-colors"
+            >
+              Forgot Password?
+            </button>
+          </div>
+
           <div className="text-center text-xs text-gray-400 pt-4 border-t border-gray-700">
             <p>© 2025 Betengin. All rights reserved.</p>
             <p className="mt-1">Platform Version 1.0</p>

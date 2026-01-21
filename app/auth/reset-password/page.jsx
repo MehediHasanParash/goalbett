@@ -19,17 +19,17 @@ export default function ResetPasswordPage() {
   const [otp, setOtp] = useState("")
 
   useEffect(() => {
-    // Get data from session storage
     const resetIdentifier = sessionStorage.getItem("reset_identifier")
     const resetMethod = sessionStorage.getItem("reset_method")
     const resetOtp = sessionStorage.getItem("reset_otp")
-    
+    const resetEmail = sessionStorage.getItem("reset_email")
+
     if (!resetIdentifier || !resetMethod || !resetOtp) {
       router.push("/auth/forgot-password")
       return
     }
 
-    setIdentifier(resetIdentifier)
+    setIdentifier(resetEmail || resetIdentifier)
     setMethod(resetMethod)
     setOtp(resetOtp)
   }, [router])
@@ -72,13 +72,22 @@ export default function ResetPasswordPage() {
       const data = await response.json()
 
       if (data.success) {
-        // Clear session storage
         sessionStorage.removeItem("reset_identifier")
         sessionStorage.removeItem("reset_method")
         sessionStorage.removeItem("reset_otp")
-        
-        // Redirect to login
-        router.push("/auth?reset=success")
+        sessionStorage.removeItem("reset_email")
+        sessionStorage.removeItem("reset_debug_otp")
+
+        const loginPath = {
+          player: "/p/login",
+          agent: "/a/login",
+          subagent: "/a/login",
+          tenant: "/t/login",
+          super_admin: "/s/login",
+          staff: "/staff/login",
+        }[data.role] || "/auth"
+
+        router.push(`${loginPath}?reset=success`)
       } else {
         setErrors({ password: data.error || "Failed to reset password" })
       }

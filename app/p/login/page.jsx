@@ -85,6 +85,15 @@ export default function PlayerLoginPage() {
           </AnimatedButton>
 
           <div className="text-center">
+            <button
+              onClick={() => (window.location.href = "/auth/forgot-password")}
+              className="text-primary hover:text-primary/80 transition-colors text-sm"
+            >
+              Forgot Password?
+            </button>
+          </div>
+
+          <div className="text-center">
             <span className="text-muted-foreground">Don't have an account? </span>
             <button
               onClick={() => (window.location.href = "/p/signup")}

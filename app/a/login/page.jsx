@@ -70,13 +70,22 @@ export default function AgentLoginPage() {
             {isLoading ? "Logging in..." : "Log In"}
           </AnimatedButton>
 
-          <div className="text-center">
+          <div className="text-center space-y-3">
             <button
-              onClick={() => router.push("/")}
-              className="text-muted-foreground hover:text-foreground transition-colors text-sm"
+              type="button"
+              onClick={() => router.push("/auth/forgot-password")}
+              className="text-primary hover:text-primary/80 transition-colors text-sm"
             >
-              Back to Home
+              Forgot Password?
             </button>
+            <div>
+              <button
+                onClick={() => router.push("/")}
+                className="text-muted-foreground hover:text-foreground transition-colors text-sm"
+              >
+                Back to Home
+              </button>
+            </div>
           </div>
         </div>
       </AuthLayout>
