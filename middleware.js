@@ -2,6 +2,11 @@ import { NextResponse } from "next/server"
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl
+
+  if (pathname.startsWith("/api/") || pathname.startsWith("/_next/")) {
+    return NextResponse.next()
+  }
+
   const hostname = request.headers.get("host") || ""
   const token = request.cookies.get("auth_token")?.value
 
@@ -297,5 +302,7 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|_next/data|favicon.ico|public|.*\\..*).*)"),
+  ],
 }
