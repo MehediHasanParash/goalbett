@@ -12,8 +12,6 @@ This document explains the complete financial enforcement system that has been i
 
 A comprehensive **Financial Enforcement Engine** that automatically calculates and deducts taxes, charity, and other fees at the backend level during bet settlement.
 
-### How It Works
-
 **File**: `lib/services/financial-enforcement-engine.js`
 
 1. **Bet Placement**: When a bet is placed, the system validates:
