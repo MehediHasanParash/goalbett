@@ -35,7 +35,14 @@ export async function POST(request) {
     await connectDB()
     const data = await request.json()
 
-    // Validate required fields
+    console.log("[POST /api/super/jurisdiction-rules] Received:", {
+      countryCode: data.countryCode,
+      playerDeductions: data.playerDeductions?.length || 0,
+      operatorDeductions: data.operatorDeductions?.length || 0,
+      limits: data.limits,
+      featuresAllowed: data.featuresAllowed,
+    })
+
     if (!data.countryCode || !data.countryName) {
       return NextResponse.json({ error: "Country code and name are required" }, { status: 400 })
     }
@@ -44,7 +51,6 @@ export async function POST(request) {
       return NextResponse.json({ error: "Change reason required for active rules" }, { status: 400 })
     }
 
-    // Check if rule already exists for this country/profile
     const existing = await JurisdictionRule.findOne({
       countryCode: data.countryCode.toUpperCase(),
       profileName: data.profileName || "standard",
@@ -52,33 +58,66 @@ export async function POST(request) {
     })
 
     if (existing && data.status === "active") {
-      return NextResponse.json(
-        { error: "An active rule already exists for this country/profile. It will be archived automatically." },
-        { status: 400 }
-      )
+      existing.status = "archived"
+      existing.effectiveTo = new Date()
+      await existing.save()
+      console.log("[POST] Archived existing active rule:", existing._id)
     }
 
-    // Create new rule
-    const rule = new JurisdictionRule({
+    const sanitizeDeduction = (d, defaultAccount) => ({
+      name: d.name || "other",
+      enabled: d.enabled !== false,
+      percentage: parseFloat(d.percentage) || 0,
+      threshold: parseFloat(d.threshold) || 0,
+      calculationBase: d.calculationBase || "gross_win",
+      appliesTo: d.appliesTo || "player",
+      applicationOrder: parseInt(d.applicationOrder) || 1,
+      destinationAccount: d.destinationAccount || defaultAccount,
+      rounding: d.rounding || "normal",
+      description: d.description || "",
+    })
+
+    const ruleData = {
       countryCode: data.countryCode.toUpperCase(),
       countryName: data.countryName,
       profileName: data.profileName || "standard",
-      version: 1,
+      version: existing && data.status === "active" ? existing.version + 1 : 1,
       effectiveFrom: new Date(),
       status: data.status || "draft",
       baseCurrency: data.baseCurrency || "USD",
-      playerDeductions: data.playerDeductions || [],
-      operatorDeductions: data.operatorDeductions || [],
-      limits: data.limits || {},
-      featuresAllowed: data.featuresAllowed || {},
+      playerDeductions: (data.playerDeductions || []).map((d) => sanitizeDeduction(d, "tax_payable")),
+      operatorDeductions: (data.operatorDeductions || []).map((d) => sanitizeDeduction(d, "operator_revenue")),
+      limits: {
+        maxWinPerBet: data.limits?.maxWinPerBet || null,
+        maxWinPerDay: data.limits?.maxWinPerDay || null,
+        maxBetAmount: data.limits?.maxBetAmount || null,
+        minBetAmount: data.limits?.minBetAmount || 1,
+      },
+      featuresAllowed: {
+        cashbackEnabled: data.featuresAllowed?.cashbackEnabled !== false,
+        bonusesEnabled: data.featuresAllowed?.bonusesEnabled !== false,
+        liveBettingEnabled: data.featuresAllowed?.liveBettingEnabled !== false,
+        casinoEnabled: data.featuresAllowed?.casinoEnabled !== false,
+        virtualSportsEnabled: data.featuresAllowed?.virtualSportsEnabled !== false,
+      },
       providerLocked: data.providerLocked || false,
       lockedFields: data.lockedFields || [],
       createdBy: auth.user.userId,
-      changeReason: data.changeReason,
-      regulatoryInfo: data.regulatoryInfo || {},
-    })
+      changeReason: data.changeReason || "",
+      regulatoryInfo: {
+        licensingBody: data.regulatoryInfo?.licensingBody || "",
+        licenseNumber: data.regulatoryInfo?.licenseNumber || "",
+        complianceNotes: data.regulatoryInfo?.complianceNotes || "",
+      },
+      previousVersionId: existing && data.status === "active" ? existing._id : null,
+    }
+
+    console.log("[POST] Creating rule with playerDeductions:", ruleData.playerDeductions.length)
+
+    const rule = new JurisdictionRule(ruleData)
 
     await rule.save()
+    console.log("[POST] Rule saved:", rule._id, "PlayerDeductions:", rule.playerDeductions.length)
 
     // Audit log
     await logAudit({

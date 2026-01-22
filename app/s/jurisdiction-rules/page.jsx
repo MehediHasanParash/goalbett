@@ -432,7 +432,29 @@ export default function JurisdictionRulesPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="col-span-3 space-y-2">
+        <div className="space-y-2">
+          <Label>Destination Account</Label>
+          <Select
+            value={deduction.destinationAccount || "tax_payable"}
+            onValueChange={(value) => updateDeduction(type, index, "destinationAccount", value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="tax_payable">Tax Payable</SelectItem>
+              <SelectItem value="charity_payable">Charity Payable</SelectItem>
+              <SelectItem value="vat_payable">VAT Payable</SelectItem>
+              <SelectItem value="excise_payable">Excise Payable</SelectItem>
+              <SelectItem value="social_responsibility">Social Responsibility</SelectItem>
+              <SelectItem value="gaming_levy">Gaming Levy</SelectItem>
+              <SelectItem value="operator_revenue">Operator Revenue</SelectItem>
+              <SelectItem value="platform_commission">Platform Commission</SelectItem>
+              <SelectItem value="other_payable">Other Payable</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="col-span-2 space-y-2">
           <Label>Description</Label>
           <Input
             value={deduction.description}

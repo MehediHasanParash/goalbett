@@ -71,52 +71,6 @@ export async function middleware(request) {
   const isTenantPlayerDomain =
     isPlayerDomain || (!isLocalDev && !isSuperAdminDomain && !isTenantDomain && !isAgentDomain)
 
-  // Check geo blocking for player routes on tenant domains
-  if (isPlayerRoute && isTenantPlayerDomain && !isLocalDev && !isPlayerLoginPage) {
-    try {
-      // Get client IP
-      const clientIP =
-        request.headers.get("cf-connecting-ip") ||
-        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-        request.headers.get("x-real-ip") ||
-        "unknown"
-
-      // Get country code from Cloudflare/Vercel headers
-      const countryCode = request.headers.get("cf-ipcountry") || request.headers.get("x-vercel-ip-country") || null
-
-      if (clientIP !== "unknown" && countryCode) {
-        // Call our geo-check API to check database rules
-        const baseUrl = request.nextUrl.origin
-        const geoCheckUrl = `${baseUrl}/api/geo-check`
-
-        const geoResponse = await fetch(geoCheckUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ip: clientIP,
-            countryCode: countryCode.toUpperCase(),
-            route: pathname,
-          }),
-        })
-
-        if (geoResponse.ok) {
-          const geoResult = await geoResponse.json()
-
-          if (!geoResult.allowed) {
-            // Redirect to geo-blocked page
-            const blockedUrl = new URL("/geo-blocked", request.url)
-            blockedUrl.searchParams.set("reason", geoResult.reason || "Access not available in your region")
-            blockedUrl.searchParams.set("country", geoResult.countryName || countryCode)
-            return NextResponse.redirect(blockedUrl)
-          }
-        }
-      }
-    } catch (error) {
-      // Log error but don't block access on failure
-      console.error("[Middleware] Geo check error:", error.message)
-    }
-  }
-
   // MFA still required for sensitive routes, but no domain redirect
   if (pathname.startsWith("/s/") && !isLocalDev) {
     const mfaToken = request.cookies.get("mfa_verified")?.value
