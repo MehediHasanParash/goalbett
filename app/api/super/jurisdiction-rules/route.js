@@ -122,13 +122,11 @@ export async function PUT(request) {
       return NextResponse.json({ error: "Change reason required for updates" }, { status: 400 })
     }
 
-    // Get existing rule
     const existingRule = await JurisdictionRule.findById(data.ruleId)
     if (!existingRule) {
       return NextResponse.json({ error: "Rule not found" }, { status: 404 })
     }
 
-    // Create new version using the model method
     const newRule = await JurisdictionRule.createNewVersion(
       data.ruleId,
       {
@@ -146,7 +144,6 @@ export async function PUT(request) {
       data.changeReason
     )
 
-    // Audit log
     await logAudit({
       action: "jurisdiction_rule_updated",
       performedBy: auth.user.userId,
@@ -165,6 +162,56 @@ export async function PUT(request) {
     return NextResponse.json(newRule)
   } catch (error) {
     console.error("[PUT /api/super/jurisdiction-rules] Error:", error)
+    return NextResponse.json({ error: "Internal server error", message: error.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const auth = await verifyAuth(request)
+    if (!auth.success || auth.user.role !== "super_admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    await connectDB()
+
+    const { searchParams } = new URL(request.url)
+    const ruleId = searchParams.get("id")
+
+    if (!ruleId) {
+      return NextResponse.json({ error: "Rule ID required" }, { status: 400 })
+    }
+
+    const rule = await JurisdictionRule.findById(ruleId)
+    if (!rule) {
+      return NextResponse.json({ error: "Rule not found" }, { status: 404 })
+    }
+
+    if (rule.status === "active") {
+      return NextResponse.json(
+        { error: "Cannot delete active rules. Archive them first by creating a new version." },
+        { status: 400 }
+      )
+    }
+
+    await JurisdictionRule.findByIdAndDelete(ruleId)
+
+    await logAudit({
+      action: "jurisdiction_rule_deleted",
+      performedBy: auth.user.userId,
+      targetType: "jurisdiction_rule",
+      targetId: ruleId,
+      details: {
+        countryCode: rule.countryCode,
+        countryName: rule.countryName,
+        version: rule.version,
+        status: rule.status,
+      },
+    })
+
+    return NextResponse.json({ success: true, message: "Rule deleted successfully" })
+  } catch (error) {
+    console.error("[DELETE /api/super/jurisdiction-rules] Error:", error)
     return NextResponse.json({ error: "Internal server error", message: error.message }, { status: 500 })
   }
 }
