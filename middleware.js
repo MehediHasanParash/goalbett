@@ -303,6 +303,6 @@ export async function middleware(request) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|_next/data|favicon.ico|public|.*\\..*).*)"),
+    "/((?!api|_next/static|_next/image|_next/data|favicon.ico|public|.*\\..*).*)",
   ],
 }
