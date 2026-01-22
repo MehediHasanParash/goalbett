@@ -7,7 +7,7 @@ import { logAudit } from "@/lib/audit-logger"
 export async function GET(request) {
   try {
     const auth = await verifyAuth(request)
-    if (!auth.success || auth.user.role !== "super_admin") {
+    if (!auth.authenticated || (auth.user?.role !== "super_admin" && auth.user?.role !== "superadmin")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -28,7 +28,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const auth = await verifyAuth(request)
-    if (!auth.success || auth.user.role !== "super_admin") {
+    if (!auth.authenticated || (auth.user?.role !== "super_admin" && auth.user?.role !== "superadmin")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -107,7 +107,7 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const auth = await verifyAuth(request)
-    if (!auth.success || auth.user.role !== "super_admin") {
+    if (!auth.authenticated || (auth.user?.role !== "super_admin" && auth.user?.role !== "superadmin")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -169,7 +169,7 @@ export async function PUT(request) {
 export async function DELETE(request) {
   try {
     const auth = await verifyAuth(request)
-    if (!auth.success || auth.user.role !== "super_admin") {
+    if (!auth.authenticated || (auth.user?.role !== "super_admin" && auth.user?.role !== "superadmin")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

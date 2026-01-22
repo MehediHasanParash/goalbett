@@ -127,10 +127,20 @@ export default function JurisdictionRulesPage() {
     fetchRules()
   }, [])
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("auth_token")
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    }
+  }
+
   const fetchRules = async () => {
     try {
       setLoading(true)
-      const res = await fetch("/api/super/jurisdiction-rules")
+      const res = await fetch("/api/super/jurisdiction-rules", {
+        headers: getAuthHeaders(),
+      })
       if (res.ok) {
         const data = await res.json()
         setRules(Array.isArray(data) ? data : [])
@@ -201,7 +211,7 @@ export default function JurisdictionRulesPage() {
 
       const res = await fetch("/api/super/jurisdiction-rules", {
         method: isEditing ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload),
       })
 
@@ -226,7 +236,10 @@ export default function JurisdictionRulesPage() {
     if (!confirm("Are you sure you want to delete this rule?")) return
 
     try {
-      const res = await fetch(`/api/super/jurisdiction-rules?id=${ruleId}`, { method: "DELETE" })
+      const res = await fetch(`/api/super/jurisdiction-rules?id=${ruleId}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      })
       if (res.ok) {
         toast.success("Rule deleted")
         fetchRules()
