@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { SuperAdminSidebar } from "@/components/admin/super-admin-sidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,7 @@ import {
   FileText,
   Download,
   Loader2,
+  Plus,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -118,24 +119,22 @@ export default function JurisdictionRulesPage() {
   const [rules, setRules] = useState([])
   const [selectedRule, setSelectedRule] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState("basic")
   const [formData, setFormData] = useState(DEFAULT_FORM)
 
-  useEffect(() => {
-    fetchRules()
-  }, [])
-
-  const getAuthHeaders = () => {
+  const getAuthHeaders = useCallback(() => {
+    if (typeof window === "undefined") return {}
     const token = localStorage.getItem("auth_token")
     return {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     }
-  }
+  }, [])
 
-  const fetchRules = async () => {
+  const fetchRules = useCallback(async () => {
     try {
       setLoading(true)
       const res = await fetch("/api/super/jurisdiction-rules", {
@@ -153,7 +152,11 @@ export default function JurisdictionRulesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [getAuthHeaders])
+
+  useEffect(() => {
+    fetchRules()
+  }, [fetchRules])
 
   const addDeduction = (type) => {
     const newDeduction = {
@@ -168,19 +171,25 @@ export default function JurisdictionRulesPage() {
       rounding: "normal",
       description: "",
     }
-    setFormData({ ...formData, [type]: [...formData[type], newDeduction] })
+    setFormData((prev) => ({ ...prev, [type]: [...prev[type], newDeduction] }))
+    toast.success(`New ${type === "playerDeductions" ? "player" : "operator"} deduction added`)
   }
 
   const updateDeduction = (type, index, field, value) => {
-    const updated = [...formData[type]]
-    updated[index] = { ...updated[index], [field]: value }
-    setFormData({ ...formData, [type]: updated })
+    setFormData((prev) => {
+      const updated = [...prev[type]]
+      updated[index] = { ...updated[index], [field]: value }
+      return { ...prev, [type]: updated }
+    })
   }
 
   const removeDeduction = (type, index) => {
-    const updated = formData[type].filter((_, i) => i !== index)
-    updated.forEach((d, i) => (d.applicationOrder = i + 1))
-    setFormData({ ...formData, [type]: updated })
+    setFormData((prev) => {
+      const updated = prev[type].filter((_, i) => i !== index)
+      updated.forEach((d, i) => (d.applicationOrder = i + 1))
+      return { ...prev, [type]: updated }
+    })
+    toast.success("Deduction removed")
   }
 
   const handleSave = async () => {
@@ -270,6 +279,7 @@ export default function JurisdictionRulesPage() {
       regulatoryInfo: rule.regulatoryInfo || DEFAULT_FORM.regulatoryInfo,
     })
     setIsEditing(true)
+    setIsCreating(false)
     setActiveTab("basic")
   }
 
@@ -290,6 +300,7 @@ export default function JurisdictionRulesPage() {
     })
     setSelectedRule(null)
     setIsEditing(false)
+    setIsCreating(true)
     setActiveTab("basic")
     toast.info("Rule cloned - select a new country and save")
   }
@@ -297,14 +308,27 @@ export default function JurisdictionRulesPage() {
   const resetForm = () => {
     setSelectedRule(null)
     setIsEditing(false)
-    setFormData(DEFAULT_FORM)
+    setIsCreating(false)
+    setFormData({ ...DEFAULT_FORM })
     setActiveTab("basic")
+  }
+
+  const handleNewRule = () => {
+    resetForm()
+    setIsCreating(true)
+    setActiveTab("basic")
+    toast.info("Creating new rule - fill in the details below")
   }
 
   const handleCountryChange = (code) => {
     const country = COUNTRY_LIST.find((c) => c.code === code)
     if (country) {
-      setFormData({ ...formData, countryCode: code, countryName: country.name, baseCurrency: country.currency })
+      setFormData((prev) => ({
+        ...prev,
+        countryCode: code,
+        countryName: country.name,
+        baseCurrency: country.currency,
+      }))
     }
   }
 
@@ -316,6 +340,109 @@ export default function JurisdictionRulesPage() {
     link.download = `jurisdiction-rules-${new Date().toISOString().split("T")[0]}.json`
     link.click()
   }
+
+  const renderDeductionCard = (deduction, index, type) => (
+    <Card key={index} className="p-4 bg-muted/30">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <Switch
+            checked={deduction.enabled}
+            onCheckedChange={(checked) => updateDeduction(type, index, "enabled", checked)}
+          />
+          <span className="text-sm font-medium">{deduction.enabled ? "Enabled" : "Disabled"}</span>
+        </div>
+        <Button size="sm" variant="destructive" onClick={() => removeDeduction(type, index)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-2">
+          <Label>Type *</Label>
+          <Select value={deduction.name} onValueChange={(value) => updateDeduction(type, index, "name", value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent>
+              {DEDUCTION_TYPES.map((t) => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Percentage (%)</Label>
+          <Input
+            type="number"
+            value={deduction.percentage}
+            onChange={(e) => updateDeduction(type, index, "percentage", parseFloat(e.target.value) || 0)}
+            min="0"
+            max="100"
+            step="0.1"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Threshold ({formData.baseCurrency})</Label>
+          <Input
+            type="number"
+            value={deduction.threshold}
+            onChange={(e) => updateDeduction(type, index, "threshold", parseFloat(e.target.value) || 0)}
+            min="0"
+            placeholder="Apply only if >= this"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Calculation Base</Label>
+          <Select
+            value={deduction.calculationBase}
+            onValueChange={(value) => updateDeduction(type, index, "calculationBase", value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CALCULATION_BASES.map((base) => (
+                <SelectItem key={base.value} value={base.value}>
+                  {base.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Order</Label>
+          <Input
+            type="number"
+            value={deduction.applicationOrder}
+            onChange={(e) => updateDeduction(type, index, "applicationOrder", parseInt(e.target.value) || 1)}
+            min="1"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Rounding</Label>
+          <Select value={deduction.rounding} onValueChange={(value) => updateDeduction(type, index, "rounding", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">Normal</SelectItem>
+              <SelectItem value="floor">Floor (Round Down)</SelectItem>
+              <SelectItem value="ceil">Ceil (Round Up)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="col-span-3 space-y-2">
+          <Label>Description</Label>
+          <Input
+            value={deduction.description}
+            onChange={(e) => updateDeduction(type, index, "description", e.target.value)}
+            placeholder="e.g., Ethiopian 15% win tax as per Gaming Proclamation"
+          />
+        </div>
+      </div>
+    </Card>
+  )
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -338,7 +465,7 @@ export default function JurisdictionRulesPage() {
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Refresh
               </Button>
-              <Button onClick={resetForm}>
+              <Button onClick={handleNewRule} className="bg-green-600 hover:bg-green-700">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 New Rule
               </Button>
@@ -369,6 +496,10 @@ export default function JurisdictionRulesPage() {
                     <div className="text-center py-8">
                       <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
                       <p className="text-sm text-muted-foreground">No rules created yet</p>
+                      <Button variant="outline" size="sm" className="mt-4" onClick={handleNewRule}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create First Rule
+                      </Button>
                     </div>
                   ) : (
                     rules.map((rule) => (
@@ -443,552 +574,407 @@ export default function JurisdictionRulesPage() {
 
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle>{isEditing ? `Edit Rule: ${formData.countryName}` : "Create New Rule"}</CardTitle>
-                <CardDescription>Configure financial rules for a jurisdiction</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                  <TabsList className="grid grid-cols-5">
-                    <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                    <TabsTrigger value="player">Player Taxes</TabsTrigger>
-                    <TabsTrigger value="operator">Operator Taxes</TabsTrigger>
-                    <TabsTrigger value="limits">Limits</TabsTrigger>
-                    <TabsTrigger value="features">Features</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="basic" className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Country *</Label>
-                        <Select value={formData.countryCode} onValueChange={handleCountryChange}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select country" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {COUNTRY_LIST.map((country) => (
-                              <SelectItem key={country.code} value={country.code}>
-                                {country.name} ({country.code}) - {country.currency}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Profile Name *</Label>
-                        <Input
-                          value={formData.profileName}
-                          onChange={(e) => setFormData({ ...formData, profileName: e.target.value })}
-                          placeholder="standard"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Base Currency</Label>
-                        <Input
-                          value={formData.baseCurrency}
-                          onChange={(e) => setFormData({ ...formData, baseCurrency: e.target.value.toUpperCase() })}
-                          placeholder="USD"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Status *</Label>
-                        <Select
-                          value={formData.status}
-                          onValueChange={(value) => setFormData({ ...formData, status: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="draft">Draft (not enforced)</SelectItem>
-                            <SelectItem value="active">Active (enforced)</SelectItem>
-                            <SelectItem value="archived">Archived</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Change Reason {formData.status === "active" && "*"}</Label>
-                      <Textarea
-                        value={formData.changeReason}
-                        onChange={(e) => setFormData({ ...formData, changeReason: e.target.value })}
-                        placeholder="Describe why this rule is being created or modified"
-                        rows={2}
-                      />
-                    </div>
-                    <div className="border-t pt-4 mt-4">
-                      <h4 className="font-semibold mb-3">Regulatory Information</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Licensing Body</Label>
-                          <Input
-                            value={formData.regulatoryInfo?.licensingBody || ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                regulatoryInfo: { ...formData.regulatoryInfo, licensingBody: e.target.value },
-                              })
-                            }
-                            placeholder="e.g., Ethiopian Gaming Board"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>License Number</Label>
-                          <Input
-                            value={formData.regulatoryInfo?.licenseNumber || ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                regulatoryInfo: { ...formData.regulatoryInfo, licenseNumber: e.target.value },
-                              })
-                            }
-                            placeholder="License reference"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="player" className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold">Player-Side Deductions</h3>
-                        <p className="text-sm text-muted-foreground">Applied to player winnings or stakes</p>
-                      </div>
-                      <Button size="sm" onClick={() => addDeduction("playerDeductions")}>
-                        <PlusCircle className="h-4 w-4 mr-2" />
-                        Add Deduction
-                      </Button>
-                    </div>
-                    {formData.playerDeductions.length === 0 ? (
-                      <div className="border border-dashed rounded-lg p-8 text-center">
-                        <p className="text-muted-foreground">No player deductions configured</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-2"
-                          onClick={() => addDeduction("playerDeductions")}
-                        >
-                          Add First Deduction
-                        </Button>
-                      </div>
-                    ) : (
-                      formData.playerDeductions.map((deduction, index) => (
-                        <Card key={index} className="p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <Switch
-                                checked={deduction.enabled}
-                                onCheckedChange={(checked) =>
-                                  updateDeduction("playerDeductions", index, "enabled", checked)
-                                }
-                              />
-                              <span className="text-sm font-medium">{deduction.enabled ? "Enabled" : "Disabled"}</span>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => removeDeduction("playerDeductions", index)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-3 gap-3">
-                            <div className="space-y-2">
-                              <Label>Type *</Label>
-                              <Select
-                                value={deduction.name}
-                                onValueChange={(value) => updateDeduction("playerDeductions", index, "name", value)}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {DEDUCTION_TYPES.map((type) => (
-                                    <SelectItem key={type.value} value={type.value}>
-                                      {type.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Percentage (%)</Label>
-                              <Input
-                                type="number"
-                                value={deduction.percentage}
-                                onChange={(e) =>
-                                  updateDeduction("playerDeductions", index, "percentage", parseFloat(e.target.value) || 0)
-                                }
-                                min="0"
-                                max="100"
-                                step="0.1"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Threshold ({formData.baseCurrency})</Label>
-                              <Input
-                                type="number"
-                                value={deduction.threshold}
-                                onChange={(e) =>
-                                  updateDeduction("playerDeductions", index, "threshold", parseFloat(e.target.value) || 0)
-                                }
-                                min="0"
-                                placeholder="Apply only if >= this"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Calculation Base</Label>
-                              <Select
-                                value={deduction.calculationBase}
-                                onValueChange={(value) =>
-                                  updateDeduction("playerDeductions", index, "calculationBase", value)
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {CALCULATION_BASES.map((base) => (
-                                    <SelectItem key={base.value} value={base.value}>
-                                      {base.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Order</Label>
-                              <Input
-                                type="number"
-                                value={deduction.applicationOrder}
-                                onChange={(e) =>
-                                  updateDeduction("playerDeductions", index, "applicationOrder", parseInt(e.target.value) || 1)
-                                }
-                                min="1"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Rounding</Label>
-                              <Select
-                                value={deduction.rounding}
-                                onValueChange={(value) => updateDeduction("playerDeductions", index, "rounding", value)}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="normal">Normal</SelectItem>
-                                  <SelectItem value="floor">Floor (Round Down)</SelectItem>
-                                  <SelectItem value="ceil">Ceil (Round Up)</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="col-span-3 space-y-2">
-                              <Label>Description</Label>
-                              <Input
-                                value={deduction.description}
-                                onChange={(e) =>
-                                  updateDeduction("playerDeductions", index, "description", e.target.value)
-                                }
-                                placeholder="e.g., Ethiopian 15% win tax as per Gaming Proclamation"
-                              />
-                            </div>
-                          </div>
-                        </Card>
-                      ))
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="operator" className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold">Operator-Side Deductions</h3>
-                        <p className="text-sm text-muted-foreground">Applied to GGR/Revenue (tenant-level)</p>
-                      </div>
-                      <Button size="sm" onClick={() => addDeduction("operatorDeductions")}>
-                        <PlusCircle className="h-4 w-4 mr-2" />
-                        Add Deduction
-                      </Button>
-                    </div>
-                    {formData.operatorDeductions.length === 0 ? (
-                      <div className="border border-dashed rounded-lg p-8 text-center">
-                        <p className="text-muted-foreground">No operator deductions configured</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-2"
-                          onClick={() => addDeduction("operatorDeductions")}
-                        >
-                          Add First Deduction
-                        </Button>
-                      </div>
-                    ) : (
-                      formData.operatorDeductions.map((deduction, index) => (
-                        <Card key={index} className="p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <Switch
-                                checked={deduction.enabled}
-                                onCheckedChange={(checked) =>
-                                  updateDeduction("operatorDeductions", index, "enabled", checked)
-                                }
-                              />
-                              <span className="text-sm font-medium">{deduction.enabled ? "Enabled" : "Disabled"}</span>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => removeDeduction("operatorDeductions", index)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-3 gap-3">
-                            <div className="space-y-2">
-                              <Label>Type *</Label>
-                              <Select
-                                value={deduction.name}
-                                onValueChange={(value) => updateDeduction("operatorDeductions", index, "name", value)}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {DEDUCTION_TYPES.map((type) => (
-                                    <SelectItem key={type.value} value={type.value}>
-                                      {type.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Percentage (%)</Label>
-                              <Input
-                                type="number"
-                                value={deduction.percentage}
-                                onChange={(e) =>
-                                  updateDeduction("operatorDeductions", index, "percentage", parseFloat(e.target.value) || 0)
-                                }
-                                min="0"
-                                max="100"
-                                step="0.1"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Calculation Base</Label>
-                              <Select
-                                value={deduction.calculationBase}
-                                onValueChange={(value) =>
-                                  updateDeduction("operatorDeductions", index, "calculationBase", value)
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {CALCULATION_BASES.map((base) => (
-                                    <SelectItem key={base.value} value={base.value}>
-                                      {base.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="col-span-3 space-y-2">
-                              <Label>Description</Label>
-                              <Input
-                                value={deduction.description}
-                                onChange={(e) =>
-                                  updateDeduction("operatorDeductions", index, "description", e.target.value)
-                                }
-                                placeholder="e.g., 5% charity contribution on GGR"
-                              />
-                            </div>
-                          </div>
-                        </Card>
-                      ))
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="limits" className="space-y-4">
-                    <h3 className="font-semibold">Betting Limits</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Configure max/min amounts for this jurisdiction</p>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Max Win Per Bet ({formData.baseCurrency})</Label>
-                        <Input
-                          type="number"
-                          value={formData.limits.maxWinPerBet || ""}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              limits: { ...formData.limits, maxWinPerBet: e.target.value ? parseFloat(e.target.value) : null },
-                            })
-                          }
-                          placeholder="No limit"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Max Win Per Day ({formData.baseCurrency})</Label>
-                        <Input
-                          type="number"
-                          value={formData.limits.maxWinPerDay || ""}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              limits: { ...formData.limits, maxWinPerDay: e.target.value ? parseFloat(e.target.value) : null },
-                            })
-                          }
-                          placeholder="No limit"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Max Bet Amount ({formData.baseCurrency})</Label>
-                        <Input
-                          type="number"
-                          value={formData.limits.maxBetAmount || ""}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              limits: { ...formData.limits, maxBetAmount: e.target.value ? parseFloat(e.target.value) : null },
-                            })
-                          }
-                          placeholder="No limit"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Min Bet Amount ({formData.baseCurrency})</Label>
-                        <Input
-                          type="number"
-                          value={formData.limits.minBetAmount}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              limits: { ...formData.limits, minBetAmount: parseFloat(e.target.value) || 1 },
-                            })
-                          }
-                          min="0"
-                        />
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="features" className="space-y-4">
-                    <h3 className="font-semibold">Allowed Features</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Enable or disable features for this jurisdiction</p>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <Label className="text-base">Cashback</Label>
-                          <p className="text-sm text-muted-foreground">Allow cashback promotions for players</p>
-                        </div>
-                        <Switch
-                          checked={formData.featuresAllowed.cashbackEnabled}
-                          onCheckedChange={(checked) =>
-                            setFormData({
-                              ...formData,
-                              featuresAllowed: { ...formData.featuresAllowed, cashbackEnabled: checked },
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <Label className="text-base">Bonuses</Label>
-                          <p className="text-sm text-muted-foreground">Allow welcome bonuses and promotions</p>
-                        </div>
-                        <Switch
-                          checked={formData.featuresAllowed.bonusesEnabled}
-                          onCheckedChange={(checked) =>
-                            setFormData({
-                              ...formData,
-                              featuresAllowed: { ...formData.featuresAllowed, bonusesEnabled: checked },
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <Label className="text-base">Live Betting</Label>
-                          <p className="text-sm text-muted-foreground">Allow in-play/live betting</p>
-                        </div>
-                        <Switch
-                          checked={formData.featuresAllowed.liveBettingEnabled}
-                          onCheckedChange={(checked) =>
-                            setFormData({
-                              ...formData,
-                              featuresAllowed: { ...formData.featuresAllowed, liveBettingEnabled: checked },
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <Label className="text-base">Casino Games</Label>
-                          <p className="text-sm text-muted-foreground">Allow casino/slots games</p>
-                        </div>
-                        <Switch
-                          checked={formData.featuresAllowed.casinoEnabled !== false}
-                          onCheckedChange={(checked) =>
-                            setFormData({
-                              ...formData,
-                              featuresAllowed: { ...formData.featuresAllowed, casinoEnabled: checked },
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <Label className="text-base">Virtual Sports</Label>
-                          <p className="text-sm text-muted-foreground">Allow virtual sports betting</p>
-                        </div>
-                        <Switch
-                          checked={formData.featuresAllowed.virtualSportsEnabled !== false}
-                          onCheckedChange={(checked) =>
-                            setFormData({
-                              ...formData,
-                              featuresAllowed: { ...formData.featuresAllowed, virtualSportsEnabled: checked },
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="border-t pt-4 mt-4">
-                      <div className="flex items-center justify-between p-4 border rounded-lg bg-yellow-500/10 border-yellow-500/30">
-                        <div>
-                          <Label className="text-base">Provider Locked</Label>
-                          <p className="text-sm text-muted-foreground">Tenants cannot override these rules</p>
-                        </div>
-                        <Switch
-                          checked={formData.providerLocked}
-                          onCheckedChange={(checked) => setFormData({ ...formData, providerLocked: checked })}
-                        />
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-
-                <div className="flex gap-2 mt-6 pt-4 border-t">
-                  <Button onClick={handleSave} className="flex-1" disabled={saving}>
-                    {saving ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        {isEditing ? "Save Changes (New Version)" : "Create Rule"}
-                      </>
-                    )}
-                  </Button>
-                  {(isEditing || formData.countryCode) && (
-                    <Button onClick={resetForm} variant="outline">
-                      Cancel
-                    </Button>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>
+                      {isEditing
+                        ? `Edit Rule: ${formData.countryName}`
+                        : isCreating
+                          ? "Create New Rule"
+                          : "Select or Create a Rule"}
+                    </CardTitle>
+                    <CardDescription>
+                      {isEditing
+                        ? "Modify financial rules for this jurisdiction"
+                        : isCreating
+                          ? "Configure financial rules for a new jurisdiction"
+                          : "Click 'New Rule' to create a rule or select an existing one"}
+                    </CardDescription>
+                  </div>
+                  {(isEditing || isCreating) && (
+                    <Badge variant={isEditing ? "default" : "secondary"}>{isEditing ? "Editing" : "Creating"}</Badge>
                   )}
                 </div>
+              </CardHeader>
+              <CardContent>
+                {!isEditing && !isCreating ? (
+                  <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                    <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Rule Selected</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Select an existing rule from the list or create a new one
+                    </p>
+                    <Button onClick={handleNewRule} className="bg-green-600 hover:bg-green-700">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Create New Rule
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                      <TabsList className="grid grid-cols-5">
+                        <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                        <TabsTrigger value="player">
+                          Player Taxes
+                          {formData.playerDeductions.length > 0 && (
+                            <Badge variant="secondary" className="ml-1">
+                              {formData.playerDeductions.length}
+                            </Badge>
+                          )}
+                        </TabsTrigger>
+                        <TabsTrigger value="operator">
+                          Operator Taxes
+                          {formData.operatorDeductions.length > 0 && (
+                            <Badge variant="secondary" className="ml-1">
+                              {formData.operatorDeductions.length}
+                            </Badge>
+                          )}
+                        </TabsTrigger>
+                        <TabsTrigger value="limits">Limits</TabsTrigger>
+                        <TabsTrigger value="features">Features</TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="basic" className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Country *</Label>
+                            <Select value={formData.countryCode} onValueChange={handleCountryChange}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select country" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {COUNTRY_LIST.map((country) => (
+                                  <SelectItem key={country.code} value={country.code}>
+                                    {country.name} ({country.code}) - {country.currency}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Profile Name *</Label>
+                            <Input
+                              value={formData.profileName}
+                              onChange={(e) => setFormData((prev) => ({ ...prev, profileName: e.target.value }))}
+                              placeholder="standard"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Base Currency</Label>
+                            <Input
+                              value={formData.baseCurrency}
+                              onChange={(e) =>
+                                setFormData((prev) => ({ ...prev, baseCurrency: e.target.value.toUpperCase() }))
+                              }
+                              placeholder="USD"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Status *</Label>
+                            <Select
+                              value={formData.status}
+                              onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="draft">Draft (not enforced)</SelectItem>
+                                <SelectItem value="active">Active (enforced)</SelectItem>
+                                <SelectItem value="archived">Archived</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Change Reason {formData.status === "active" && "*"}</Label>
+                          <Textarea
+                            value={formData.changeReason}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, changeReason: e.target.value }))}
+                            placeholder="Describe why this rule is being created or modified"
+                            rows={2}
+                          />
+                        </div>
+                        <div className="border-t pt-4 mt-4">
+                          <h4 className="font-semibold mb-3">Regulatory Information</h4>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Licensing Body</Label>
+                              <Input
+                                value={formData.regulatoryInfo?.licensingBody || ""}
+                                onChange={(e) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    regulatoryInfo: { ...prev.regulatoryInfo, licensingBody: e.target.value },
+                                  }))
+                                }
+                                placeholder="e.g., Ethiopian Gaming Board"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>License Number</Label>
+                              <Input
+                                value={formData.regulatoryInfo?.licenseNumber || ""}
+                                onChange={(e) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    regulatoryInfo: { ...prev.regulatoryInfo, licenseNumber: e.target.value },
+                                  }))
+                                }
+                                placeholder="License reference"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="player" className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-semibold">Player-Side Deductions</h3>
+                            <p className="text-sm text-muted-foreground">Applied to player winnings or stakes</p>
+                          </div>
+                          <Button onClick={() => addDeduction("playerDeductions")} className="bg-green-600 hover:bg-green-700">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Player Tax
+                          </Button>
+                        </div>
+                        {formData.playerDeductions.length === 0 ? (
+                          <div className="border border-dashed rounded-lg p-8 text-center">
+                            <p className="text-muted-foreground mb-4">No player deductions configured</p>
+                            <Button variant="outline" onClick={() => addDeduction("playerDeductions")}>
+                              <Plus className="h-4 w-4 mr-2" />
+                              Add First Player Tax
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {formData.playerDeductions.map((deduction, index) =>
+                              renderDeductionCard(deduction, index, "playerDeductions")
+                            )}
+                          </div>
+                        )}
+                      </TabsContent>
+
+                      <TabsContent value="operator" className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-semibold">Operator-Side Deductions</h3>
+                            <p className="text-sm text-muted-foreground">Applied to GGR/Revenue (tenant-level)</p>
+                          </div>
+                          <Button onClick={() => addDeduction("operatorDeductions")} className="bg-green-600 hover:bg-green-700">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Operator Tax
+                          </Button>
+                        </div>
+                        {formData.operatorDeductions.length === 0 ? (
+                          <div className="border border-dashed rounded-lg p-8 text-center">
+                            <p className="text-muted-foreground mb-4">No operator deductions configured</p>
+                            <Button variant="outline" onClick={() => addDeduction("operatorDeductions")}>
+                              <Plus className="h-4 w-4 mr-2" />
+                              Add First Operator Tax
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {formData.operatorDeductions.map((deduction, index) =>
+                              renderDeductionCard(deduction, index, "operatorDeductions")
+                            )}
+                          </div>
+                        )}
+                      </TabsContent>
+
+                      <TabsContent value="limits" className="space-y-4">
+                        <h3 className="font-semibold">Betting Limits</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Configure max/min amounts for this jurisdiction
+                        </p>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Max Win Per Bet ({formData.baseCurrency})</Label>
+                            <Input
+                              type="number"
+                              value={formData.limits.maxWinPerBet || ""}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  limits: {
+                                    ...prev.limits,
+                                    maxWinPerBet: e.target.value ? parseFloat(e.target.value) : null,
+                                  },
+                                }))
+                              }
+                              placeholder="No limit"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Max Win Per Day ({formData.baseCurrency})</Label>
+                            <Input
+                              type="number"
+                              value={formData.limits.maxWinPerDay || ""}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  limits: {
+                                    ...prev.limits,
+                                    maxWinPerDay: e.target.value ? parseFloat(e.target.value) : null,
+                                  },
+                                }))
+                              }
+                              placeholder="No limit"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Max Bet Amount ({formData.baseCurrency})</Label>
+                            <Input
+                              type="number"
+                              value={formData.limits.maxBetAmount || ""}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  limits: {
+                                    ...prev.limits,
+                                    maxBetAmount: e.target.value ? parseFloat(e.target.value) : null,
+                                  },
+                                }))
+                              }
+                              placeholder="No limit"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Min Bet Amount ({formData.baseCurrency})</Label>
+                            <Input
+                              type="number"
+                              value={formData.limits.minBetAmount}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  limits: { ...prev.limits, minBetAmount: parseFloat(e.target.value) || 1 },
+                                }))
+                              }
+                              min="0"
+                            />
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="features" className="space-y-4">
+                        <h3 className="font-semibold">Allowed Features</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Enable or disable features for this jurisdiction
+                        </p>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <Label className="text-base">Cashback</Label>
+                              <p className="text-sm text-muted-foreground">Allow cashback promotions for players</p>
+                            </div>
+                            <Switch
+                              checked={formData.featuresAllowed.cashbackEnabled}
+                              onCheckedChange={(checked) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  featuresAllowed: { ...prev.featuresAllowed, cashbackEnabled: checked },
+                                }))
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <Label className="text-base">Bonuses</Label>
+                              <p className="text-sm text-muted-foreground">Allow welcome bonuses and promotions</p>
+                            </div>
+                            <Switch
+                              checked={formData.featuresAllowed.bonusesEnabled}
+                              onCheckedChange={(checked) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  featuresAllowed: { ...prev.featuresAllowed, bonusesEnabled: checked },
+                                }))
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <Label className="text-base">Live Betting</Label>
+                              <p className="text-sm text-muted-foreground">Allow in-play/live betting</p>
+                            </div>
+                            <Switch
+                              checked={formData.featuresAllowed.liveBettingEnabled}
+                              onCheckedChange={(checked) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  featuresAllowed: { ...prev.featuresAllowed, liveBettingEnabled: checked },
+                                }))
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <Label className="text-base">Casino Games</Label>
+                              <p className="text-sm text-muted-foreground">Allow casino/slots games</p>
+                            </div>
+                            <Switch
+                              checked={formData.featuresAllowed.casinoEnabled !== false}
+                              onCheckedChange={(checked) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  featuresAllowed: { ...prev.featuresAllowed, casinoEnabled: checked },
+                                }))
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <Label className="text-base">Virtual Sports</Label>
+                              <p className="text-sm text-muted-foreground">Allow virtual sports betting</p>
+                            </div>
+                            <Switch
+                              checked={formData.featuresAllowed.virtualSportsEnabled !== false}
+                              onCheckedChange={(checked) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  featuresAllowed: { ...prev.featuresAllowed, virtualSportsEnabled: checked },
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+                        <div className="border-t pt-4 mt-4">
+                          <div className="flex items-center justify-between p-4 border rounded-lg bg-yellow-500/10 border-yellow-500/30">
+                            <div>
+                              <Label className="text-base">Provider Locked</Label>
+                              <p className="text-sm text-muted-foreground">Tenants cannot override these rules</p>
+                            </div>
+                            <Switch
+                              checked={formData.providerLocked}
+                              onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, providerLocked: checked }))}
+                            />
+                          </div>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+
+                    <div className="flex gap-2 mt-6 pt-4 border-t">
+                      <Button onClick={handleSave} className="flex-1" disabled={saving}>
+                        {saving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            {isEditing ? "Save Changes (New Version)" : "Create Rule"}
+                          </>
+                        )}
+                      </Button>
+                      <Button onClick={resetForm} variant="outline">
+                        Cancel
+                      </Button>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
